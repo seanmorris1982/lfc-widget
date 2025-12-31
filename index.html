@@ -15,28 +15,30 @@
     </style>
 </head>
 <body>
-    <div id="list">Checking Liverpool Fixtures...</div>
+    <div id="list">Loading Liverpool Fixtures...</div>
     <div id="debug"></div>
 
     <script>
         async function getMatches() {
-            const API_KEY = '9e5d53c071a94c54ace847bf067127ca';
+            const API_KEY = '9e5d53c071a94c54ace847bf067127ca'; // <--- MAKE SURE THIS IS CORRECT
             const targetUrl = 'https://api.football-data.org/v4/teams/64/matches?status=SCHEDULED&limit=6';
             
-            // This proxy (AllOrigins) is the most reliable for GitHub-to-API communication
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            // Using a different proxy: corsproxy.io is often faster for GitHub Pages
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
             try {
-                const res = await fetch(proxyUrl);
-                const blob = await res.json();
-                
-                // AllOrigins returns the data as a string inside 'contents'
-                // We manually add the API key to the request inside the proxy if needed, 
-                // but usually, we just need to parse the response:
-                const data = JSON.parse(blob.contents);
+                const res = await fetch(proxyUrl, {
+                    headers: { 'X-Auth-Token': API_KEY }
+                });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: Check API Key`);
+                }
+
+                const data = await res.json();
 
                 if (!data.matches || data.matches.length === 0) {
-                    document.getElementById('list').innerText = "No upcoming matches found.";
+                    document.getElementById('list').innerText = "No upcoming matches.";
                     return;
                 }
 
@@ -52,12 +54,11 @@
                     </div>
                 `).join('');
                 
-                document.getElementById('debug').innerText = "Sync OK: " + new Date().toLocaleTimeString();
+                document.getElementById('debug').innerText = "Last updated: " + new Date().toLocaleTimeString();
 
             } catch (e) {
-                // If it fails, let's see exactly what the error is
-                document.getElementById('list').innerHTML = `<div style="color:red">Error: ${e.message}</div>`;
-                console.error(e);
+                document.getElementById('list').innerText = "Error: " + e.message;
+                document.getElementById('debug').innerText = "Try refreshing in a moment.";
             }
         }
         
