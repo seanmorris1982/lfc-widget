@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; padding: 10px; margin: 0; }
+        .fixture { border-bottom: 1px solid #333; padding: 15px 0; display: flex; flex-direction: column; align-items: center; }
+        .teams { display: flex; width: 100%; justify-content: center; align-items: center; font-weight: bold; font-size: 1rem; }
+        .home, .away { display: flex; align-items: center; flex: 1; }
+        .home { justify-content: flex-end; text-align: right; }
+        .away { justify-content: flex-start; text-align: left; }
+        .crest { width: 28px; height: 28px; object-fit: contain; margin: 0 10px; }
+        .vs { color: #c8102e; font-size: 0.8rem; font-weight: 900; width: 30px; text-align: center; }
+        .details { font-size: 0.75rem; color: #aaa; margin-top: 8px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div id="list">Loading Liverpool Fixtures...</div>
+    <script>
+        async function getMatches() {
+            const API_KEY = '9e5d53c071a94c54ace847bf067127ca';
+            const targetUrl = 'https://api.football-data.org/v4/teams/64/matches?status=SCHEDULED&limit=6';
+            
+            // This is the "Magic Link" that lets your GitHub page talk to the API
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
+            try {
+                const res = await fetch(proxyUrl);
+                const blob = await res.json();
+                const data = JSON.parse(blob.contents);
+
+                const list = document.getElementById('list');
+                list.innerHTML = data.matches.map(m => `
+                    <div class="fixture">
+                        <div class="teams">
+                            <span class="home">${m.homeTeam.shortName || m.homeTeam.name} <img class="crest" src="${m.homeTeam.crest}"></span>
+                            <span class="vs">VS</span>
+                            <span class="away"><img class="crest" src="${m.awayTeam.crest}"> ${m.awayTeam.shortName || m.awayTeam.name}</span>
+                        </div>
+                        <div class="details">${new Date(m.utcDate).toLocaleString([], {weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                document.getElementById('list').innerText = "Unable to load fixtures.";
+            }
+        }
+        
+        getMatches();
+        // This keeps it updating automatically every hour while your screen is on
+        setInterval(getMatches, 3600000); 
+    </script>
+</body>
+</html>
